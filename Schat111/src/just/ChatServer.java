@@ -17,9 +17,13 @@ public class ChatServer {
     private Session session;
     private ServerEndpointConfig endpointConfig;
     private Transcript transcript;
+ 
+	    private static final Logger logger =
+	        Logger.getLogger(ChatServer.class.getName());
     
     @OnOpen
     public void startChatChannel(EndpointConfig config, Session session) {
+	logger.info("entering"+logger.getName());
         this.endpointConfig = (ServerEndpointConfig) config;
         ChatServerConfigurator csc = (ChatServerConfigurator) endpointConfig.getConfigurator();
         this.transcript = csc.getTranscript();
@@ -112,7 +116,7 @@ public class ChatServer {
             try {
                 nextSession.getBasicRemote().sendObject(ulum);
             } catch (IOException | EncodeException ex) {
-                System.out.println("Error updating a client : " + ex.getMessage());
+                logger.info("Error updating a client : " + ex.getMessage());
             }
         }
     }
@@ -124,7 +128,7 @@ public class ChatServer {
             this.session.getUserProperties().remove(USERNAME_KEY);
             this.session.close(new CloseReason(CloseReason.CloseCodes.NORMAL_CLOSURE, "User logged off"));
         } catch (IOException e) {
-            System.out.println("Error removing user");
+            logger.info("Error removing user");
         }
     }
 
@@ -136,7 +140,7 @@ public class ChatServer {
                 try {
                     nextSession.getBasicRemote().sendObject(cdm);
                 } catch (IOException | EncodeException ex) {
-                    System.out.println("Error updating a client : " + ex.getMessage());
+                    logger.info("Error updating a client : " + ex.getMessage());
                 }
     		
     		}
@@ -151,7 +155,7 @@ public class ChatServer {
             try {
                 nextSession.getBasicRemote().sendObject(cdm);
             } catch (IOException | EncodeException ex) {
-                System.out.println("Error updating a client : " + ex.getMessage());
+                logger.info("Error updating a client : " + ex.getMessage());
             }
         }
         }
