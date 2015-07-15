@@ -28,6 +28,11 @@ public class ChatServer {
         ChatServerConfigurator csc = (ChatServerConfigurator) endpointConfig.getConfigurator();
         this.transcript = csc.getTranscript();
         this.session = session;
+
+      try{
+            Class.forName("com.mysql.jdbc.Driver");}
+           catch (ClassNotFoundException t)
+           {}
     }
 
     @OnMessage
@@ -68,10 +73,60 @@ public class ChatServer {
         this.registerUser(newUsername);
         this.broadcastUserListUpdate();
  //       this.addMessage(" just joined.");
+     try {
+         	
+            String url = "jdbc:mysql://localhost:3306/Chat"; 
+            Connection conn = DriverManager.getConnection(url,"root","sajeeshnl66"); 
+            Statement sh = conn.createStatement();
+        String sql = "SELECT name,mesaage,recipient FROM Users";
+        ResultSet rs = sh.executeQuery(sql);
+        while(rs.next()) {
+        	String name = rs.getString("name");
+        	
+        	        if (this.getCurrentUsername().equals(name)) {
+        	        	String mesaage = rs.getString("mesaage");
+        	        	String reci = rs.getString("recipient");
+        	        	this.transcriptSend(name,mesaage,reci);
+        	        	
+        	        }
+        	
+        }
+        conn.close();
+       
+       
+               }
+
+catch(Exception e) { 
+    System.err.println("Got an exception! "); 
+    System.err.println(e.getMessage()); 
+} 
     }
 
     void processChatUpdate(ChatUpdateMessage message) {
         this.addMessage(message.getMessage(),message.getRecipient());
+
+       
+        try {
+         	
+             String url = "jdbc:mysql://localhost:3306/Chat"; 
+             Connection conn = DriverManager.getConnection(url,"root","sajeeshnl66"); 
+             Statement st = conn.createStatement(); 
+             String user = message.getUsername();
+             String messag = message.getMessage();
+             String reci = message.getRecipient();
+             st.executeUpdate("INSERT INTO Users(name,mesaage,recipient)" + 
+                 "VALUES ('"+reci+"', '"+messag+"','"+user+"')"); 
+             st.executeUpdate("INSERT INTO just(name,mesaage)" + 
+                     "VALUES ('"+reci+"', '"+messag+"')"); 
+            
+            
+
+             conn.close(); 
+         } catch (Exception e) { 
+             System.err.println("Got an exception! "); 
+             System.err.println(e.getMessage()); 
+         } 
+      
     }
 
     void processSignoffRequest(UserSignoffMessage drm) {
@@ -161,6 +216,23 @@ public class ChatServer {
         }
     }
     }
+
+   private void transcriptSend(String name,String mes,String reci) {
+    	String currentname = this.getCurrentUsername();
+    	ChatUpdateMessage obj =  new ChatUpdateMessage(currentname, mes,reci);
+	    for (Session other : session.getOpenSessions()) {
+    		String opensession = (String) other.getUserProperties().get(USERNAME_KEY);
+    		if(currentname.equals(opensession)) {
+
+                try {
+                    other.getBasicRemote().sendObject(obj);
+                } catch (IOException | EncodeException ex) {
+                    System.out.println("Error updating a client : " + ex.getMessage());
+                      }
+    			
+    		}
+    	   }
+      }
 
     private void addMessage(String message, String recipi) {
         this.transcript.addEntry(this.getCurrentUsername(), message, recipi);
